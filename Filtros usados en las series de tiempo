@@ -1,0 +1,16 @@
+#Filtro Frecuencia cardiaca
+fc = fc[columns][((fc['consecutivo']!=7)|((fc['dato']<300)&(fc['dato']>0)))]
+#Filtro Presión arterial diastólica
+dbp = dbp[columns][((dbp['consecutivo']!=9)|((dbp['dato']<400)&(dbp['dato']>0)))]
+#Filtro presión media
+pm = pm[columns][((pm['consecutivo']!=104)|((pm['dato']<300)&(pm['dato']>0)))]
+#Filtro Frecuancia respiratoria
+fr = fr[columns][((fr['consecutivo']!=17)|((fr['dato']<70)&(fr['dato']>0)))]
+#Filtro indice de glasgow
+gw = gw[columns][((gw['consecutivo']!=95)|((gw['dato']<15)&(gw['dato']>0)))]
+#Filtro glucosa
+gc = gc[columns][((gc['consecutivo']!=100)|((gw['dato']>0)))] 
+# Filtro saturación de oxígeno
+sp = sp[columns][((sp['consecutivo']!=127)|((sp['dato']<=100)&(sp['dato']>0)))]
+# Filtro temperatura
+tp = tp[columns][((tp['consecutivo']!=80)|((tp['dato']<=50)&(tp['dato']>0)))]

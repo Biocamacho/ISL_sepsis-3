@@ -1,0 +1,26 @@
+#Conversión datos fechas FC 
+def change_hours(df_group):
+  df_group['dif_hours'] = ((pd.to_datetime(df_group.fecha_registro) - pd.to_datetime(df_group.fecha_registro.shift())) / np.timedelta64(1, 'h')).fillna(0)
+  df_group['dif_hours'] = df_group['dif_hours'].apply(lambda x: int(round(x, 0)) if isinstance(x, (int, float)) else x)
+  dif_hours = df_group['dif_hours'].to_numpy()
+  dif_hours_split = np.split(dif_hours, np.where(np.diff(dif_hours) != 0)[0]+1)
+  index0_Orig = np.where(dif_hours == 0)[0]
+  fi = np.array([e[0] for e in dif_hours_split])
+  index0_fi = np.where(fi == 0)[0]
+  index0_fi_len = np.array([len(dif_hours_split[i]) for i in index0_fi])
+  len_diff_split = np.array([len(e) for e in dif_hours_split])
+  index=np.array(len_diff_split).cumsum()
+  index0_fi_orig = index[index0_fi]
+  initI = index0_fi_orig-index0_fi_len
+  endI = index0_fi_orig-1
+  prevI = initI-1
+  for i, ind in enumerate(prevI):
+   if i!=0 and df_group['dif_hours'].iloc[ind]>1:
+    for j in range(ind, min(endI[i], ind + df_group['dif_hours'].iloc[ind]-1)):
+        df_group['fecha_registro'].iloc[j]=pd.to_datetime(df_group['fecha_registro'].iloc[j-1])+timedelta(hours=1) 
+  return df_group
+  #Correr por cada serie
+  def changeSerie(serieV):
+   serieV=serieV.sort_values(by=['historia','fecha_registro'])
+   serieV=serieV.groupby(by=['historia','fecha_ingreso']).apply(change_hours)
+   return serieV

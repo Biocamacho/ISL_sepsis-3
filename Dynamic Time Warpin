@@ -1,0 +1,101 @@
+#Función de distancia Dynamic Time Warping (DTW)
+def dtw(x, y, size=7):#<-- cambio de 7 a 6
+#def dtw(x, y, size=10): #se cambia a 10
+  n = len(x[0])
+  m = len(y[0])
+  mat = np.zeros((n,m))
+  mat2 = np.zeros((n,m))
+  for i in range(n-1, -1, -1):
+    for j in range(m-1, -1, -1):
+      aux1 = single_dif(x[:,i], y[:,j], size)
+      aux2 = float('inf')
+      if i < (n-1):
+        aux2 = min(aux2, mat[i+1, j])
+      if j < (m-1):
+        aux2 = min(aux2, mat[i, j+1])
+      if (i < (n-1)) and (j < (m-1)):
+        aux2 = min(aux2, mat[i+1, j+1])
+      if aux2 == float('inf'):
+        aux2=0
+      mat[i,j] = aux1 + aux2
+      mat2[i,j] = aux1
+  #print(mat)
+  #print()
+  #print(mat2)
+  return mat[0,0]
+
+def single_dif(a, b, size = 7):#<---cambio 7 a 6
+#def single_dif(a, b, size = 10): # cambio a 10
+  count = 0
+  aux = 0
+  for i in range(size):
+    if (a[i]!=0) and (b[i]!=0):
+      aux+=abs(a[i]-b[i])
+      count+=1
+  if count > 2: 
+    return aux/count
+  return float('inf')
+  
+  
+  from math import sqrt
+#Hereda de las clases de sklearn para que tenga los métodos de fit y transform
+class custom_KNN(BaseEstimator, TransformerMixin):
+  def euclidean_distance(self, row1, row2):
+    distance = 0.0
+    for i in range(len(row1)-1):
+      distance += (row1[i] - row2[i])**2
+    return sqrt(distance)
+
+   #KNN usando DTW 
+  #Encontrar los vecinos más cercanos
+  def get_neighbors(self, train, test_row, clasif, num_neighbors):
+    distances = list()
+    for train_row, y in zip(train,clasif):
+      dist = dtw(test_row, train_row)# utiliza el DTW 
+      distances.append((train_row, dist, y))
+    distances.sort(key=lambda tup: tup[1])
+    return distances[0:num_neighbors]
+
+  # Realizar la predicción con base en los vecinos más cercanos
+  def predict_classification(self, train, test_row, clasif, num_neighbors):
+    neighbors = self.get_neighbors(train, test_row, clasif, num_neighbors)
+    output_values = [row[-1] for row in neighbors]
+    prediction = max(set(output_values), key=output_values.count)
+    return prediction
+  # Calcular la probabilidad con base en los vecinos más cercanos
+  def predict_proba_classification(self, train, test_row, clasif, num_neighbors):
+    neighbors = self.get_neighbors(train, test_row, clasif, num_neighbors)
+    output_values = [row[-1] for row in neighbors]
+    p = sum(output_values)/len(output_values)
+    return [1-p, p]
+  #Inicializar
+  def __init__(self, k):
+    self.k=k
+    pass
+  def fit(self, X, y=None):
+    self.X = [np.concatenate(([i[0]],[i[1]],[i[2]],[i[3]],[i[4]],[i[5]],[i[6]])) for i in X.values] #Original<---,[i[7]]
+    #self.X = [np.concatenate(([i[0]],[i[1]],[i[2]],[i[3]],[i[4]])) for i in X.values] #sin FR
+    self.y = y
+    return self
+  def transform(self, X, y=None):
+    ans=[]
+    i=0
+    for row in X.values:
+      r = np.concatenate(([row[0]],[row[1]],[row[2]],[row[3]],[row[4]],[row[5]],[i[6]]))#<---cambio se adiciona ,[i[7]]
+     #r = np.concatenate(([row[0]],[row[1]],[row[2]],[row[3]],[row[4]]))#sin FR
+      if i%100 == 0:
+        print(i)
+      i+=1
+      ans.append(self.predict_classification(self.X, r, self.y, self.k))
+    return ans
+  def predict_proba(self, X):
+    ans=[]
+    i=0
+    for row in X.values:
+      r = np.concatenate(([row[0]],[row[1]],[row[2]],[row[3]],[row[4]],[row[5]],[row[6]]))#Original<--se adicona ,[i[7]]
+      #r = np.concatenate(([row[0]],[row[1]],[row[2]],[row[3]],[row[4]]))#sin FR
+      if i%100 == 0:
+        print(i)
+      i+=1
+      ans.append(self.predict_proba_classification(self.X, r, self.y, self.k))
+    return np.array(ans)
